@@ -1,9 +1,25 @@
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 import Currency from "react-currency-formatter";
+import {
+  addToBasket,
+  removeFromBasket,
+  selectItems,
+} from "../slices/basketSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 function Product({ id, title, price, description, category, image }) {
+  const [onBasket, setOnBasket] = useState(false);
+  const products = useSelector(selectItems);
+
+  useEffect(() => {
+    const ind = products.find((product) => product.id === id);
+    if (ind) {
+      setOnBasket(true);
+    }
+  }, [products]);
+
   const MAX_RATING = 5;
   const MIN_RATING = 1;
 
@@ -12,6 +28,31 @@ function Product({ id, title, price, description, category, image }) {
   );
 
   const [hasPrime] = useState(Math.random() < 0.5);
+
+  const dispatch = useDispatch();
+
+  const addItemToBasket = () => {
+    const product = {
+      id,
+      title,
+      hasPrime,
+      rating,
+      price,
+      description,
+      category,
+      image,
+    };
+
+    // Sending the product as an action to the REDUX store... the basket slice
+
+    dispatch(addToBasket(product));
+    setOnBasket(true);
+  };
+
+  const removeItemFromBasket = () => {
+    dispatch(removeFromBasket(id));
+    setOnBasket(false);
+  };
 
   return (
     <div className="relative flex flex-col m-5 bg-white z-30 p-10">
@@ -46,7 +87,12 @@ function Product({ id, title, price, description, category, image }) {
         </div>
       )}
 
-      <button className="mt-auto button">Add to basket</button>
+      <button
+        onClick={!onBasket ? addItemToBasket : removeItemFromBasket}
+        className={`mt-auto ${!onBasket ? "buttonAdd" : "buttonRemove"} `}
+      >
+        {!onBasket ? "Add to basket" : "Remove from basket"}
+      </button>
     </div>
   );
 }
